@@ -1,0 +1,142 @@
+openapi: 3.1.0
+info:
+  title: Todo App - Authentication API
+  description: |
+    JWT verification and user context endpoints for the Todo application.
+    Authentication is handled by Better Auth (frontend), and this API
+    verifies JWT tokens and provides user context for protected endpoints.
+  version: 1.0.0
+  contact:
+    name: Todo App Development Team
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://api.production.example.com
+    description: Production server (future)
+
+paths:
+  /api/auth/me:
+    get:
+      summary: Get Current User
+      description: |
+        Returns the authenticated user's information based on the JWT token
+        provided in the Authorization header. This endpoint demonstrates
+        JWT verification and user context extraction.
+      operationId: getCurrentUser
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved user information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+              examples:
+                success:
+                  summary: Authenticated user
+                  value:
+                    id: "550e8400-e29b-41d4-a716-446655440000"
+                    email: "user@example.com"
+                    name: "John Doe"
+                    email_verified: true
+                    image: "https://example.com/avatar.jpg"
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_token:
+                  summary: Missing Authorization header
+                  value:
+                    detail: "Authorization header missing"
+                invalid_token:
+                  summary: Invalid or expired token
+                  value:
+                    detail: "Invalid or expired JWT token"
+                malformed_token:
+                  summary: Malformed token
+                  value:
+                    detail: "Malformed JWT token"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token issued by Better Auth. Include in the Authorization header:
+        `Authorization: Bearer <token>`
+
+  schemas:
+    UserResponse:
+      type: object
+      required:
+        - id
+        - email
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique user identifier (from Better Auth)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: "user@example.com"
+        email_verified:
+          type: boolean
+          description: Whether the user's email has been verified
+          example: true
+        name:
+          type: string
+          nullable: true
+          description: User display name
+          example: "John Doe"
+        image:
+          type: string
+          format: uri
+          nullable: true
+          description: Profile image URL
+          example: "https://example.com/avatar.jpg"
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the user was created
+          example: "2025-12-31T00:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp of the last user update
+          example: "2025-12-31T00:00:00Z"
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Human-readable error message
+          example: "Invalid or expired JWT token"
+        field_errors:
+          type: object
+          description: Field-specific validation errors (for 422 responses)
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            email:
+              - "Invalid email format"
+
+tags:
+  - name: Authentication
+    description: JWT verification and user context endpoints

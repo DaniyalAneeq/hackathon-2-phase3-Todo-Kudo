@@ -1,0 +1,342 @@
+openapi: 3.1.0
+info:
+  title: Task CRUD API
+  description: RESTful API for managing todo tasks with hardcoded demo user
+  version: 1.0.0
+  contact:
+    name: Todo App Team
+
+servers:
+  - url: http://localhost:8000/api
+    description: Local development server
+  - url: https://api.todo-app.example.com/api
+    description: Production server
+
+paths:
+  /tasks:
+    get:
+      summary: List all tasks for demo user
+      description: Retrieve all tasks owned by the demo user (demo-user-123), ordered by creation date (newest first)
+      operationId: listTasks
+      tags:
+        - Tasks
+      responses:
+        '200':
+          description: Successful response with task list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+                  total:
+                    type: integer
+                    description: Total number of tasks
+                    example: 5
+              examples:
+                empty:
+                  summary: Empty task list
+                  value:
+                    tasks: []
+                    total: 0
+                with_tasks:
+                  summary: Task list with items
+                  value:
+                    tasks:
+                      - id: 1
+                        title: "Buy groceries"
+                        description: "Milk, eggs, bread"
+                        is_completed: false
+                        created_at: "2026-01-01T10:30:00Z"
+                        user_id: "demo-user-123"
+                      - id: 2
+                        title: "Write documentation"
+                        description: null
+                        is_completed: true
+                        created_at: "2026-01-01T09:15:00Z"
+                        user_id: "demo-user-123"
+                    total: 2
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create a new task
+      description: Create a new task for the demo user with title and optional description
+      operationId: createTask
+      tags:
+        - Tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+            examples:
+              with_description:
+                summary: Task with description
+                value:
+                  title: "Buy groceries"
+                  description: "Milk, eggs, bread, cheese"
+              without_description:
+                summary: Task without description
+                value:
+                  title: "Call dentist"
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+              example:
+                id: 3
+                title: "Buy groceries"
+                description: "Milk, eggs, bread, cheese"
+                is_completed: false
+                created_at: "2026-01-01T14:22:00Z"
+                user_id: "demo-user-123"
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /tasks/{id}:
+    get:
+      summary: Get a single task by ID
+      description: Retrieve a specific task by its ID (only if owned by demo user)
+      operationId: getTask
+      tags:
+        - Tasks
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Task found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      summary: Update a task
+      description: Update task fields (title, description, or completion status). Only tasks owned by demo user can be updated.
+      operationId: updateTask
+      tags:
+        - Tasks
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+            examples:
+              toggle_completion:
+                summary: Toggle completion status
+                value:
+                  is_completed: true
+              update_title:
+                summary: Update title
+                value:
+                  title: "Buy organic groceries"
+              update_all:
+                summary: Update all fields
+                value:
+                  title: "Buy organic groceries"
+                  description: "Milk, eggs, whole wheat bread"
+                  is_completed: false
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete a task
+      description: Permanently delete a task. Only tasks owned by demo user can be deleted.
+      operationId: deleteTask
+      tags:
+        - Tasks
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '204':
+          description: Task deleted successfully (no content)
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  parameters:
+    TaskId:
+      name: id
+      in: path
+      required: true
+      description: Unique identifier of the task
+      schema:
+        type: integer
+        minimum: 1
+      example: 1
+
+  schemas:
+    Task:
+      type: object
+      required:
+        - id
+        - title
+        - is_completed
+        - created_at
+        - user_id
+      properties:
+        id:
+          type: integer
+          description: Unique task identifier
+          example: 1
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Task title
+          example: "Buy groceries"
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+          description: Optional task description
+          example: "Milk, eggs, bread"
+        is_completed:
+          type: boolean
+          description: Task completion status
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when task was created
+          example: "2026-01-01T10:30:00Z"
+        user_id:
+          type: string
+          description: Owner of the task (demo-user-123 for this phase)
+          example: "demo-user-123"
+
+    TaskCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Task title (required)
+          example: "Buy groceries"
+        description:
+          type: string
+          maxLength: 2000
+          description: Optional task description
+          example: "Milk, eggs, bread"
+
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Updated task title
+          example: "Buy organic groceries"
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+          description: Updated task description
+          example: "Milk, eggs, whole wheat bread"
+        is_completed:
+          type: boolean
+          description: Updated completion status
+          example: true
+
+    ApiError:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Human-readable error message
+          example: "Task not found"
+        field_errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Field-specific validation errors (422 only)
+          example:
+            title: ["Title is required", "Title must be 255 characters or less"]
+            description: ["Description must be 2000 characters or less"]
+
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          example:
+            detail: "Task not found"
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          examples:
+            empty_title:
+              summary: Empty title
+              value:
+                detail: "Validation error"
+                field_errors:
+                  title: ["Title is required"]
+            title_too_long:
+              summary: Title exceeds max length
+              value:
+                detail: "Validation error"
+                field_errors:
+                  title: ["Title must be 255 characters or less"]
+            description_too_long:
+              summary: Description exceeds max length
+              value:
+                detail: "Validation error"
+                field_errors:
+                  description: ["Description must be 2000 characters or less"]
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          example:
+            detail: "Internal server error occurred"
+
+tags:
+  - name: Tasks
+    description: Task CRUD operations

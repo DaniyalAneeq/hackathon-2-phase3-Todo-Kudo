@@ -208,3 +208,58 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+# Todo App - Hackathon II
+
+## Project Overview
+This is a monorepo using GitHub Spec-Kit Plus for spec-driven development.
+Claude Code will implement features across frontend, backend, database, authentication, and QA using the provided MCP servers.
+
+## MCP Servers
+- Frontend: Next.js 16+ MCP
+- UI Components: ShadcnUI MCP
+- Authentication: Better Auth MCP
+- Database: Neon Serverless PostgreSQL MCP
+- Claude Code context management: Context7 MCP
+
+## Spec-Kit Structure
+Specifications are organized in /specs:
+- /specs/overview.md - Project overview
+- /specs/features/ - Feature specifications
+- /specs/api/ - API endpoints and MCP tool specs
+- /specs/database/ - Database schema and models
+- /specs/ui/ - UI components and pages
+
+## Claude Code Instructions
+- Act as the **root agent** and delegate tasks to sub-agents:
+  - Frontend_Dev_Agent
+  - Backend_Dev_Agent
+  - Database_Dev_Agent
+  - Auth_Integration_Agent
+  - QA_Agent
+- Always read relevant specs before implementing (@specs/ paths)
+- Implement features incrementally across the stack
+- Reference MCP servers for tasks:
+  - Next.js + ShadcnUI → Frontend pages/components
+  - Better Auth → Authentication flows
+  - Neon → Database models and queries
+  - Context7 → Maintain project-wide context for Claude Code
+- Follow monorepo conventions for file organization and coding standards
+
+## Development Workflow
+1. Read the relevant feature spec
+2. Delegate implementation to sub-agents
+3. Sub-agents implement feature across stack
+4. Run QA via QA_Agent
+5. Iterate and update specs if needed
+
+## Commands
+- Frontend: cd frontend && npm run dev
+- Backend: cd backend && fastapi dev main.py
+- Full stack: docker-compose up
+
+## Active Technologies
+- Neon Serverless PostgreSQL (cloud-hosted, connection pooling enabled) (001-project-overview)
+
+## Recent Changes
+- 001-project-overview: Added Neon Serverless PostgreSQL (cloud-hosted, connection pooling enabled)

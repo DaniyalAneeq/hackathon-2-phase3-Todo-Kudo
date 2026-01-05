@@ -1,0 +1,21 @@
+# FastAPI and ASGI Server
+fastapi[standard] = 0.112.0
+
+# Database ORM and Migrations
+sqlmodel==0.0.22
+alembic==1.14.0
+asyncpg==0.30.0
+
+# Pydantic for validation and settings
+pydantic==2.10.5
+pydantic-settings==2.7.0
+
+# JWT Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# HTTP Client for testing
+httpx==0.28.1
+
+# Python type checking (optional but recommended)
+mypy==1.14.0

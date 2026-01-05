@@ -1,0 +1,55 @@
+name: hackathon-todo
+version: "1.0"
+
+project:
+  description: "Multi-user Todo web application powered by Spec-Kit Plus + Claude Code"
+  owner: "daniyal aneeq"
+  repository: "github.com/daniyalaneeq"
+
+structure:
+  specs_dir: specs
+  features_dir: specs/features
+  api_dir: specs/api
+  database_dir: specs/database
+  ui_dir: specs/ui
+
+files:
+  overview: specs/overview.md
+  architecture: specs/architecture.md
+
+workflow:
+  steps:
+    - specification
+    - planning
+    - tasks
+    - implementation
+    - testing
+
+phases:
+  - name: phase 1 - todo
+    description: "Full-stack Todo app"
+    features:
+      - task-crud
+
+  - name: phase2-web
+    description: "Full-stack Todo web app with auth + DB"
+    features:
+      - task-crud
+      - authentication
+
+  - name: phase3-chatbot
+    description: "AI Chatbot interface for Todo app"
+    features:
+      - task-crud
+      - authentication
+      - chatbot
+
+models:
+  provider: openai
+  default_model: gpt-4.0
+  temperature: 0.2
+
+options:
+  autosave: true
+  logging: true
+  language: en
