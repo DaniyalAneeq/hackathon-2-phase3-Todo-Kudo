@@ -1,9 +1,9 @@
 /**
  * TaskList component to display all tasks
+ * Empty state is now handled by the parent component (DashboardClient)
  */
 
 import type { Task } from "@/types/task";
-import { EmptyState } from "./EmptyState";
 import { TaskCard } from "./TaskCard";
 
 interface TaskListProps {
@@ -11,10 +11,6 @@ interface TaskListProps {
 }
 
 export function TaskList({ tasks }: TaskListProps) {
-  if (tasks.length === 0) {
-    return <EmptyState />;
-  }
-
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {tasks.map((task) => (

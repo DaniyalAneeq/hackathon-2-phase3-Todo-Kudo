@@ -260,6 +260,8 @@ Specifications are organized in /specs:
 
 ## Active Technologies
 - Neon Serverless PostgreSQL (cloud-hosted, connection pooling enabled) (001-project-overview)
+- Python 3.11+ (Backend), TypeScript/ES2022 (Frontend) + FastAPI, SQLModel, Alembic (Backend); Next.js 16+, React 19, Shadcn UI (Frontend) (004-task-attributes)
+- Neon Serverless PostgreSQL (cloud-hosted, connection pooling) (004-task-attributes)
 
 ## Recent Changes
 - 001-project-overview: Added Neon Serverless PostgreSQL (cloud-hosted, connection pooling enabled)

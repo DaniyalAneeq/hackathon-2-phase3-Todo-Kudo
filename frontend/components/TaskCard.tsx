@@ -10,10 +10,26 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Calendar as CalendarIcon, X } from "lucide-react";
 import { useUpdateTask } from "@/hooks/useUpdateTask";
 import { useDeleteTask } from "@/hooks/useDeleteTask";
-import { cn } from "@/lib/utils";
+import { cn, getPriorityVariant, formatDueDate, getCategoryBadgeColor } from "@/lib/utils";
 import { format } from "date-fns";
+import type { PriorityLevel } from "@/types/task";
 
 interface TaskCardProps {
   task: Task;
@@ -26,6 +42,19 @@ export function TaskCard({ task }: TaskCardProps) {
   const [editedTitle, setEditedTitle] = useState(task.title);
   const [editedDescription, setEditedDescription] = useState(
     task.description || ""
+  );
+  const [editedPriority, setEditedPriority] = useState<PriorityLevel>(task.priority);
+  const [editedDueDate, setEditedDueDate] = useState<Date | undefined>(
+    task.due_date ? new Date(task.due_date) : undefined
+  );
+
+  // Legacy category handling: normalize and check if it's a standard category
+  const normalizedCategory = task.category?.toLowerCase();
+  const standardCategories = ['work', 'school', 'personal'];
+  const [editedCategory, setEditedCategory] = useState(
+    normalizedCategory && standardCategories.includes(normalizedCategory)
+      ? task.category
+      : ""
   );
 
   const handleToggleComplete = (checked: boolean) => {
@@ -42,6 +71,9 @@ export function TaskCard({ task }: TaskCardProps) {
         data: {
           title: editedTitle,
           description: editedDescription || null,
+          priority: editedPriority,
+          due_date: editedDueDate ? editedDueDate.toISOString() : null,
+          category: editedCategory || null,
         },
       },
       {
@@ -55,6 +87,9 @@ export function TaskCard({ task }: TaskCardProps) {
   const handleCancel = () => {
     setEditedTitle(task.title);
     setEditedDescription(task.description || "");
+    setEditedPriority(task.priority);
+    setEditedDueDate(task.due_date ? new Date(task.due_date) : undefined);
+    setEditedCategory(task.category || "");
     setIsEditing(false);
   };
 
@@ -75,6 +110,83 @@ export function TaskCard({ task }: TaskCardProps) {
             onChange={(e) => setEditedDescription(e.target.value)}
             placeholder="Task description (optional)..."
           />
+
+          <div>
+            <label className="text-sm font-medium mb-2 block">Priority</label>
+            <Select
+              value={editedPriority}
+              onValueChange={(value) => setEditedPriority(value as PriorityLevel)}
+              disabled={updateTask.isPending}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium mb-2 block">Due Date</label>
+            <div className="flex gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "flex-1 justify-start text-left font-normal",
+                      !editedDueDate && "text-muted-foreground"
+                    )}
+                    disabled={updateTask.isPending}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {editedDueDate ? format(editedDueDate, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={editedDueDate}
+                    onSelect={setEditedDueDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              {editedDueDate && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setEditedDueDate(undefined)}
+                  disabled={updateTask.isPending}
+                  title="Clear due date"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium mb-2 block">Category</label>
+            <Select
+              value={editedCategory || ""}
+              onValueChange={setEditedCategory}
+              disabled={updateTask.isPending}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select category..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Work">Work</SelectItem>
+                <SelectItem value="School">School</SelectItem>
+                <SelectItem value="Personal">Personal</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="flex gap-2">
             <Button
               size="sm"
@@ -179,6 +291,26 @@ export function TaskCard({ task }: TaskCardProps) {
             {task.description}
           </p>
         )}
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant={getPriorityVariant(task.priority)}>
+            {task.priority}
+          </Badge>
+
+          {task.due_date && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <CalendarIcon className="h-3 w-3" />
+              {formatDueDate(task.due_date)}
+            </span>
+          )}
+
+          {task.category && (
+            <Badge className={getCategoryBadgeColor(task.category)}>
+              {task.category}
+            </Badge>
+          )}
+        </div>
+
         <p className="text-xs text-muted-foreground">
           {format(new Date(task.created_at), "MMM d, yyyy h:mm a")}
         </p>
