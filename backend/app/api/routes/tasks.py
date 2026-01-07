@@ -1,10 +1,11 @@
 """
 Task routes for CRUD operations
 """
-from typing import List
+from typing import List, Literal, Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
+from sqlalchemy import case
 
 from app.core.database import get_session
 from app.models.task import Task, TaskCreate, TaskUpdate, TaskResponse
@@ -15,17 +16,67 @@ router = APIRouter(prefix="/api/tasks", tags=["tasks"])
 
 @router.get("", response_model=dict)
 async def list_tasks(
+    search: Optional[str] = Query(None, max_length=255),
+    sort_by: Literal["created_at", "due_date", "priority"] = Query("created_at"),
+    order: Literal["asc", "desc"] = Query("desc"),
+    priority: Optional[Literal["low", "medium", "high"]] = Query(None),
+    category: Optional[str] = Query(None, max_length=100),
     session: Session = Depends(get_session),
     user_id_str: str = Depends(get_current_user)
 ):
     """
-    List all tasks for the authenticated user
+    List all tasks for the authenticated user with optional filtering and sorting
+
+    Query Parameters:
+        search: Filter by title OR description (case-insensitive)
+        sort_by: Sort field (created_at, due_date, priority)
+        order: Sort order (asc, desc)
+        priority: Filter by exact priority (low, medium, high)
+        category: Filter by exact category
 
     Returns:
         dict with tasks array and total count
     """
     user_id = UUID(user_id_str)  # Convert string user_id from JWT to UUID for database query
-    statement = select(Task).where(Task.user_id == user_id).order_by(Task.created_at.desc())
+
+    # Start with base query (user isolation)
+    statement = select(Task).where(Task.user_id == user_id)
+
+    # Apply search filter (title OR description)
+    if search:
+        search_pattern = f"%{search}%"
+        statement = statement.where(
+            (Task.title.ilike(search_pattern)) |
+            (Task.description.ilike(search_pattern))
+        )
+
+    # Apply priority filter
+    if priority:
+        statement = statement.where(Task.priority == priority)
+
+    # Apply category filter
+    if category:
+        statement = statement.where(Task.category == category)
+
+    # Apply sorting
+    if sort_by == "priority":
+        # Map text priorities to numeric for sorting
+        priority_order = case(
+            (Task.priority == "high", 3),
+            (Task.priority == "medium", 2),
+            (Task.priority == "low", 1),
+            else_=0
+        )
+        order_expr = priority_order.desc() if order == "desc" else priority_order.asc()
+    elif sort_by == "due_date":
+        # Nulls always last per spec
+        order_expr = Task.due_date.asc().nullslast() if order == "asc" else Task.due_date.desc().nullslast()
+    else:  # created_at (default)
+        order_expr = Task.created_at.desc() if order == "desc" else Task.created_at.asc()
+
+    statement = statement.order_by(order_expr)
+
+    # Execute query
     tasks = session.exec(statement).all()
 
     return {

@@ -1,7 +1,10 @@
 "use client";
 
 import { useTasks } from "@/hooks/useTasks";
+import { useTaskFilters } from "@/hooks/useTaskFilters";
 import { TaskList } from "@/components/TaskList";
+import { TaskToolbar } from "@/components/TaskToolbar";
+import { EmptyState } from "@/components/EmptyState";
 import { CreateTaskForm } from "@/components/CreateTaskForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -20,7 +23,8 @@ interface DashboardClientProps {
 }
 
 export function DashboardClient({ session }: DashboardClientProps) {
-  const { data, isLoading, isError, error } = useTasks();
+  const { filters, clearFilters, hasActiveFilters } = useTaskFilters();
+  const { data, isLoading, isError, error } = useTasks(filters);
   const router = useRouter();
 
   const handleSignOut = async () => {
@@ -58,6 +62,8 @@ export function DashboardClient({ session }: DashboardClientProps) {
           <CreateTaskForm />
         </div>
 
+        <TaskToolbar />
+
         {isLoading && (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((i) => (
@@ -78,7 +84,33 @@ export function DashboardClient({ session }: DashboardClientProps) {
           </div>
         )}
 
-        {data && <TaskList tasks={data.tasks} />}
+        {data && (
+          <>
+            {data.tasks.length === 0 ? (
+              hasActiveFilters ? (
+                <EmptyState
+                  message="No tasks found matching your filters."
+                  action={
+                    <Button onClick={clearFilters} variant="outline">
+                      Clear Filters
+                    </Button>
+                  }
+                />
+              ) : (
+                <EmptyState
+                  message="No tasks yet. Create your first task!"
+                />
+              )
+            ) : (
+              <>
+                <div className="text-sm text-muted-foreground mb-4">
+                  {data.total} {data.total === 1 ? 'task' : 'tasks'} found
+                </div>
+                <TaskList tasks={data.tasks} />
+              </>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

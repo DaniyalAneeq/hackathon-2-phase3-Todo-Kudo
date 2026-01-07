@@ -4,7 +4,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateTask } from "@/lib/api-client";
-import type { Task, TaskUpdate, TasksResponse } from "@/types/task";
+import type { TaskUpdate, TasksResponse } from "@/types/task";
 import { toast } from "sonner";
 
 interface UpdateTaskVariables {

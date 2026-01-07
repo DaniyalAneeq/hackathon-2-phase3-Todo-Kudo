@@ -30,7 +30,7 @@ export function SignupForm() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await authClient.signUp.email(
+      const { error } = await authClient.signUp.email(
         {
           name: formData.name,
           email: formData.email,

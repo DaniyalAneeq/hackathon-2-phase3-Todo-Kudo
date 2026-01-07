@@ -29,7 +29,7 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await authClient.signIn.email(
+      const { error } = await authClient.signIn.email(
         {
           email: formData.email,
           password: formData.password,
@@ -104,7 +104,7 @@ export function LoginForm() {
             {isLoading ? "Signing in..." : "Sign In"}
           </Button>
           <p className="text-sm text-center text-muted-foreground">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <a href="/signup" className="text-primary hover:underline">
               Sign up
             </a>
